@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+	<!-- 解析附件类工厂 -->
+	<bean id="parserFactory" class="com.cape.platform.module.search.parser.ParserFactory">
+		<property name="mapParser">
+			<map>
+				<entry key="txt" value-ref="txtParser"/>
+				<entry key="pdf" value-ref="pdfParser"/>
+				<entry key="rft" value-ref="rtfParser"/>
+				<entry key="htm" value-ref="htmlParser"/>
+				<entry key="html" value-ref="htmlParser"/>
+				<entry key="doc" value-ref="ooxmlParser"/>
+				<entry key="docx" value-ref="ooxmlParser"/>
+				<entry key="xls" value-ref="ooxmlParser"/>
+				<entry key="xlsx" value-ref="ooxmlParser"/>
+				<entry key="ppt" value-ref="ooxmlParser"/>
+				<entry key="pptx" value-ref="ooxmlParser"/>
+				<entry key="vsd" value-ref="ooxmlParser"/>
+			</map>
+		</property>
+	</bean>
+	<!-- 各种文件处理类 -->
+	<bean id="txtParser" class="com.cape.platform.module.search.parser.TxtParser" />
+	<bean id="pdfParser" class="com.cape.platform.module.search.parser.PdfParser" />
+	<bean id="rtfParser" class="com.cape.platform.module.search.parser.RtfParser" />
+	<bean id="htmlParser" class="com.cape.platform.module.search.parser.HtmlParser" />
+	<bean id="ooxmlParser" class="com.cape.platform.module.search.parser.OoxmlParser" />
+	
+	<!-- 中文分词程序 -->
+	<bean id="analyzer" class="org.wltea.analyzer.lucene.IKAnalyzer" />
+	
+	<!-- 索引配置 -->
+	<bean id="indexConfigInfo" class="com.cape.platform.module.search.indexer.IndexConfigInfo"
+		init-method="init">
+		<property name="path">
+			<!-- 注意：路径开头加"/" -->
+			<value>/configuration/lucene/luceneIndexer.xml</value>
+		</property>
+	</bean>
+	
+	<!-- 相关关键字索引 -->
+	<bean id="relationIndexer"
+		class="com.cape.platform.module.search.indexer.RelationIndexer">
+		<property name="analyzer" ref="analyzer" />
+		<property name="searcher" ref="relationSearcher" />
+		<property name="dataSource" ref="dataSource" />
+		<property name="mergeFactor" value="${index.mergeFactor}" />
+		<property name="maxBufferedDocs" value="${index.maxBufferedDocs}" />
+		<property name="popFileData" ref="popFileData" />
+	</bean>
+
+	<!-- lucene索引，即全文主索引 -->
+	<bean id="luceneIndexer"
+		class="com.cape.platform.module.search.indexer.LuceneIndexer">
+		<property name="analyzer" ref="analyzer" />
+		<property name="searcher" ref="luceneSearcher" />
+		<property name="dataSource" ref="dataSource" />
+		<property name="indexConfigInfo" ref="indexConfigInfo" />
+		<property name="parserFactory" ref="parserFactory" />
+		<property name="mergeFactor" value="${index.mergeFactor}" />
+		<property name="maxBufferedDocs" value="${index.maxBufferedDocs}" />
+	</bean>
+	
+	<!-- lucene索引刷新服务类 -->
+	<bean id="indexRefresher" 
+		class="com.cape.platform.module.search.indexer.IndexRefresher">
+		<property name="lstIndexer">
+			<list>
+				<ref local="relationIndexer"/>
+				<ref local="luceneIndexer"/>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- lucene全文检索查询服务 -->
+	<bean id="luceneSearcher"
+		class="com.cape.platform.module.search.searcher.LuceneSearcher">
+		<property name="basePath" value="${index.basepath}" />
+		<property name="analyzer" ref="analyzer" />
+		<property name="keywordCache" ref="keywordCache" />
+		<property name="indexConfigInfo" ref="indexConfigInfo" />
+		<property name="needHighLight" value="${search.needHighLight}" />
+		<property name="fragmenters" value="${search.fragmenters}" />
+		<property name="color" value="${search.color}" />
+	</bean>
+	
+	<!-- 相关搜索关键字查询服务 -->
+	<bean id="relationSearcher" 
+		class="com.cape.platform.module.search.searcher.RelationSearcher">
+		<property name="basePath" value="${index.basepath}" />
+		<property name="analyzer" ref="analyzer" />
+		<property name="defaultCount" value="${search.relation}" />
+	</bean>
+	
+	<!-- 热门搜索关键字服务 -->
+	<bean id="popSearcher"
+		class="com.cape.platform.module.search.searcher.PopSearcher">
+		<property name="popFileData" ref="popFileData" />
+	</bean>
+	<bean id="popFileData" init-method="init"
+		class="com.cape.platform.module.search.indexer.PopFileData">
+		<property name="basePath" value="${index.basepath}" />
+	</bean>
+	
+	<!-- 关键字缓存 -->
+	<bean id="keywordCache" class="com.cape.platform.module.search.searcher.KeywordCache">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+	
+	<!-- 定时刷新索引服务 -->
+	<bean id="buildIndexer" 
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref local="indexRefresher" />
+		</property>
+		<property name="targetMethod">
+			<value>indexAll</value>
+		</property>
+	</bean>
+	<bean id="indexerTrigger" 
+		class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<ref local="buildIndexer" />
+		</property>
+		<property name="cronExpression">
+			<value>${index.schedule.expression}</value>
+		</property>
+	</bean>
+	<!-- 启动所有定时器 -->
+	<bean class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref local="indexerTrigger" />
+			</list>
+		</property>
+	</bean>
+	<!-- 全文检索服务类 -->
+	<bean id="fulltextSearchService" 
+		class="com.cape.platform.module.search.serivce.impl.FulltextSearchServiceImpl">
+	</bean>
+	<bean id="fulltextSearchAction"
+		class="com.cape.platform.module.search.action.FulltextSearchAction">
+	</bean>
+</beans>

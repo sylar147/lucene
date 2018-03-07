@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	elementFormDefault="qualified">	
+	
+	<xsd:annotation>
+		<xsd:documentation><![CDATA[全文检索配置]]></xsd:documentation>
+	</xsd:annotation>
+	
+	<!-- 元素定义 -->
+	<xsd:element name="index">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[根节点，可以有多个table节点]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="table" maxOccurs="unbounded" minOccurs="0"/>
+				<xsd:element ref="directory" maxOccurs="unbounded" minOccurs="0"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	
+	<!-- 还可以继承啊 -->
+	<xsd:element name="directory">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[对应一个绝对目录或者相对目录]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:attribute ref="name" />
+			<xsd:attribute ref="showName" />
+			<xsd:attribute name="path" type="xsd:string" use="required">
+				<xsd:annotation>
+					<xsd:documentation><![CDATA[路径.]]></xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="table">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[一般和一张数据库表对应]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="sql" />
+				<xsd:element ref="fields" />
+				<xsd:element ref="subtables" minOccurs="0" />
+			</xsd:sequence>
+			<xsd:attribute ref="name" use="required" />
+			<xsd:attribute ref="pk" />
+			<xsd:attribute ref="isWorkflow" />
+			<xsd:attribute ref="url" />
+			<xsd:attribute ref="showName" />
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="sql" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[查询sql，如果是子表，则需要以“?”方式带上主表主键
+			参数]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	
+	<xsd:element name="fields">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[包含多个filed子节点，每个table以及它的subtable
+			的column值唯一]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="field" maxOccurs="unbounded" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="field">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[一个field代表需要被索引的字段]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="subfield"  minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:attributeGroup ref="columnGroup" />
+			<xsd:attributeGroup ref="luceneGroup" />
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="subfield">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[
+			需要将多个字段合并，建索引时当一个字段]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:attributeGroup ref="columnGroup" />
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="subtables">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[子表列表，可以包含多个子表]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="subtable" maxOccurs="unbounded" />
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+	
+	<xsd:element name="subtable">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[子表节点，和table节点类似]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="sql" />
+				<xsd:element ref="fields" />
+			</xsd:sequence>
+			<xsd:attribute ref="pk" />
+		</xsd:complexType>
+	</xsd:element>
+	
+	<!-- 属性定义 -->
+	<xsd:attribute name="name" type="xsd:ID">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[类型，全局唯一]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:attribute>
+	
+	<xsd:attribute name="showName" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[类型显示名称]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:attribute>
+	
+	<xsd:attribute name="pk" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[表主键]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:attribute>
+	<xsd:attribute name="isWorkflow" default="false" type="xsd:boolean">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[是否工作流相关]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:attribute>
+	
+	<xsd:attribute name="url" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[默认显示的链接，可以带多个参数，参数形式为${xxx}，
+			其中xxx为后面field的column属性，一般即数据库字段]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:attribute>
+	
+	<xsd:attribute name="column" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[一般为数据库实际字段名(最好统一大写)，column最终
+			被当做建索引时的fieldname]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:attribute>
+	
+	<xsd:attribute name="filename" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[当column是BLOB字段时(即附件)，filename为存储
+			文件名所在的字段，主要用来确定文件类型]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:attribute>
+	
+	<xsd:attribute name="query" default="true" type="xsd:boolean">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[是否进行通用查询，true表示该域进行通用查询，
+			false表示该域不进行通用查询通用查询是指对于用户输入的关键字进行通用处理查询，一般
+			true表示该字段被查询，false的字段表示只进行存储或其他处理]]></xsd:documentation>
+		</xsd:annotation>
+	</xsd:attribute>
+	
+	<xsd:attribute name="index" default="ANALYZED">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[建索引时对字段的分词处理方式:<br>
+			NO：不分词不建索引，即查找不到(适用于主键)；<br>
+            ANALYZED：分词建索引，一般字段；<br>
+            ANALYZED_NO_NORMS：分词建索引，但是Field的值不像通常那样被保存，而是只取一个byte，这样节约存储空间<br>
+            NOT_ANALYZED：不分词建索引，适用于作者等类型字段；<br>
+            NOT_ANALYZED_NO_NORMS：不分词建索引，但是Field的值不像通常那样被保存，而是只取一个byte，这样节约存储空间]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:simpleType>
+			<xsd:restriction base="xsd:NMTOKEN">
+				<xsd:enumeration value="NO" />
+				<xsd:enumeration value="ANALYZED" />
+				<xsd:enumeration value="ANALYZED_NO_NORMS" />
+				<xsd:enumeration value="NOT_ANALYZED" />
+				<xsd:enumeration value="NOT_ANALYZED_NO_NORMS" />
+			</xsd:restriction>
+		</xsd:simpleType>
+	</xsd:attribute>
+		
+	<xsd:attribute name="store" default="NO">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[是否存储：<br>
+			YES：索引，存储该字段内容，显示用<br>
+            NO：索引，不存储
+            ]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:simpleType>
+			<xsd:restriction base="xsd:NMTOKEN">
+				<xsd:enumeration value="NO" />
+				<xsd:enumeration value="YES" />
+			</xsd:restriction>
+		</xsd:simpleType>
+	</xsd:attribute>
+	
+	<xsd:attribute name="termvector" default="NO">
+		<xsd:annotation>
+			<xsd:documentation><![CDATA[建索引时对分词向量相关信息存储方式:<br>
+			NO: 不索引Token的位置属性,普通字段使用配置<br>
+            YES: 存储向量信息<br>
+            WITH_POSITIONS: 额外索引Token的当前位置<br>
+            WITH_OFFSETS: 额外索引Token的结束点<br>
+            WITH_POSITIONS_OFFSETS: 额外索引Token的当前和结束位置，一般针对高亮字段使用该配置值]]></xsd:documentation>
+		</xsd:annotation>
+		<xsd:simpleType>
+			<xsd:restriction base="xsd:NMTOKEN">
+				<xsd:enumeration value="NO" />
+				<xsd:enumeration value="YES" />
+				<xsd:enumeration value="WITH_POSITIONS" />
+				<xsd:enumeration value="WITH_OFFSETS" />
+				<xsd:enumeration value="WITH_POSITIONS_OFFSETS" />
+			</xsd:restriction>
+		</xsd:simpleType>
+	</xsd:attribute>		
+	
+	<!-- 属性组 -->
+	<xsd:attributeGroup name="columnGroup">
+		<xsd:attribute ref="column" use="required" />
+		<xsd:attribute ref="filename" />
+	</xsd:attributeGroup>
+	
+	<xsd:attributeGroup name="luceneGroup">
+		<xsd:attribute ref="query" />
+		<xsd:attribute ref="index" />
+		<xsd:attribute ref="store" />
+		<xsd:attribute ref="termvector" />
+	</xsd:attributeGroup>
+</xsd:schema>

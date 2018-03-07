@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="GBK"?>
+<view safe="true">
+  <Datasets>
+    <Dataset type="Form" id="datasetQuery" insertOnEmpty="true">
+      <MasterLink/>
+      <Fields>
+        <Field name="KEYWORD" defaultValue="${Request.search}" label="搜索词" dataType="string">
+          <Properties/>
+          <Validator type="Required"/>
+        </Field>
+      </Fields>
+      <Parameters/>
+      <Properties/>
+    </Dataset>
+    <Dataset type="Custom" listener="com.cape.platform.module.search.dorado.view.FulltextSearchListener" autoLoadData="false" pageIndex="1" id="datasetSearch" objectClazz="com.cape.platform.module.search.bean.SearchResult" maxPropertyLevel="1" pageSize="5">
+      <MasterLink/>
+      <Fields>
+        <Field name="ID" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="TITLE" dataType="string" property="title">
+          <Properties/>
+        </Field>
+        <Field name="PUBLISHER_NAME" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="RELEASE_TIME" dataType="date" format="yyyy年MM月dd日">
+          <Properties/>
+        </Field>
+        <Field name="REMARK" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="NAME" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="SEARCH_RESULT_URL" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="SEARCH_RESULT_NAME" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="SEARCH_RESULT_TYPE" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="ENTRYID" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="PATH" dataType="string">
+          <Properties/>
+        </Field>
+        <Field name="FILE_PATH" dataType="">
+          <Properties/>
+        </Field>
+        <Field name="FILE_NAME" dataType="">
+          <Properties/>
+        </Field>
+        <Field name="FILE_CONTENT" dataType="">
+          <Properties/>
+        </Field>
+      </Fields>
+      <Parameters>
+        <Parameter dataType="string" name="keyword"/>
+        <Parameter dataType="string" name="NAME"/>
+      </Parameters>
+      <Properties/>
+      <Events>
+        <Event name="afterFlushData">if (dataset.getVisibleCount() == 0) {&#xD;
+	var html = &quot;&lt;DIV style='MARGIN-TOP: 2em; MARGIN-LEFT: 2em;'>&quot;&#xD;
+		+ &quot;&lt;P>找不到和您的查询 \&quot;&lt;B>&quot; + datasetQuery.getValue(&quot;KEYWORD&quot;) + &quot;&lt;/B>\&quot; 相符的内容或信息。&lt;/P>&quot;&#xD;
+		+ &quot;&lt;P style='MARGIN-TOP: 1em'>建议：&lt;/P>&quot;&#xD;
+		+ &quot;&lt;UL>&quot;&#xD;
+		+ &quot;&lt;LI>请检查输入字词有无错误。&lt;/LI>&quot;&#xD;
+		+ &quot;&lt;LI>请换用另外的查询字词。&lt;/LI>&quot;&#xD;
+		+ &quot;&lt;LI>请改用较常见的字词。&lt;/LI>&quot;&#xD;
+		+ &quot;&lt;/UL>&quot;&#xD;
+		+ &quot;&lt;/DIV>&quot;;&#xD;
+	var r = document.getElementById(&quot;hintNoResult&quot;);&#xD;
+	r.innerHTML = html;&#xD;
+	r.parentElement.style.display = &quot;block&quot;;&#xD;
+}&#xD;
+</Event>
+      </Events>
+    </Dataset>
+  </Datasets>
+  <Controls>
+    <Control field="KEYWORD" type="TextEditor" dataset="datasetQuery" id="editorSearch" width="200" dataType="">
+      <Events>
+        <Event name="onKeyDown">if (evt.keyCode == 13) &#xD;
+{&#xD;
+    datasetQuery.setValue(&quot;KEYWORD&quot;, editor.getValue());&#xD;
+    buttonSearch.click();&#xD;
+    evt.returnValue = false;&#xD;
+}&#xD;
+</Event>
+      </Events>
+    </Control>
+    <Control style="button_query" id="buttonSearch" type="Button" value=" ">
+      <Events>
+        <Event name="onClick">if(null == datasetQuery.getValue(&quot;KEYWORD&quot;).trim() || &quot;&quot; == datasetQuery.getValue(&quot;KEYWORD&quot;).trim())&#xD;
+{&#xD;
+	alert(&quot;请输入检索条件！&quot;);&#xD;
+	return false;&#xD;
+}&#xD;
+document.getElementById(&quot;hintNoResult&quot;).parentElement.style.display = &quot;none&quot;;&#xD;
+datasetSearch.setPageIndex(1);  &#xD;
+datasetSearch.parameters().setValue(&quot;keyword&quot;,datasetQuery.getValue(&quot;KEYWORD&quot;).trim());&#xD;
+//datasetSearch.parameters().setValue(&quot;sortField&quot;,&quot;PPD&quot;);&#xD;
+datasetSearch.flushData();&#xD;
+&#xD;
+//this.location = &quot;km_fulltext_search.jsp?search=&quot; + encodeURI( datasetQuery.getValue(&quot;KEYWORD&quot;));&#xD;
+</Event>
+      </Events>
+    </Control>
+    <Control type="DataPilot" buttonPost="hidden" dataset="datasetSearch" buttonAppend="hidden" buttonDelete="hidden" id="datapilotSearch" buttonInsert="hidden" buttonCancel="hidden"/>
+    <Control id="pagepilotSearch" dataset="datasetSearch" type="PagePilot"/>
+    <Control style="null" id="datablockSearch" width="100%" blockHeight="98%" dataset="datasetSearch" blockWidth="98%" columnCount="1" highlightSelection="false" type="DataBlock" height="100%">
+      <Events>
+        <Event name="onRefreshBlock">var HTML = &quot;&lt;TABLE style=\&quot;width:100%; height:100%\&quot; style=\&quot;padding-bottom:10\&quot;>&quot;+&#xD;
+  &quot;&lt;TR>&lt;TD align=\&quot;center\&quot; > &quot;+&#xD;
+  &quot;&lt;TABLE style=\&quot;width:100%; height:100%\&quot; cellpadding=\&quot;0\&quot; cellspacing=\&quot;1\&quot; border=\&quot;0\&quot; bgcolor=\&quot;#c7ddf1\&quot;>&quot;+&#xD;
+  &quot;&lt;TR>&lt;TD >&quot;+&#xD;
+  &quot;&lt;TABLE style=\&quot;width:100%; height:100%\&quot; cellpadding=\&quot;1\&quot; cellspacing=\&quot;3\&quot; border=\&quot;0\&quot; bgcolor=\&quot;#e6f5ff\&quot;>&lt;TR>&quot;+&#xD;
+  &quot;&lt;TD width=\&quot;5%\&quot;  class=a1>#TYPE :&lt;/TD>&quot;;&#xD;
+ if (record.getValue(&quot;FILE_PATH&quot;) != null &amp;&amp;record.getValue(&quot;FILE_PATH&quot;) !=&quot;&quot; ) {&#xD;
+ 	 HTML +=   &quot;&lt;TD width=\&quot;79%\&quot; class=a3>&lt;a style=\&quot;cursor:hand\&quot; href=\&quot;#URL\&quot; >#TITLE&lt;/a>&lt;/TD>&quot;;&#xD;
+ } else {&#xD;
+ 	HTML +=   &quot;&lt;TD width=\&quot;79%\&quot; class=a3>&lt;a style=\&quot;cursor:hand\&quot; href=\&quot;javascript:void(0);\&quot; onclick=\&quot;showDetail('#ID', '#NAME', '#TITLE', '#URL');\&quot; >#TITLE&lt;/a>&lt;/TD>&quot;;&#xD;
+ }&#xD;
+HTML = HTML + &quot;&lt;TD width=\&quot;6%\&quot; align=\&quot;right\&quot;>#user_name&lt;/TD>&quot; + &#xD;
+  &quot;&lt;TD width=\&quot;10%\&quot; align=\&quot;right\&quot;>#ASK_DATE&lt;/TD>&quot; + &#xD;
+  &quot;&lt;/TR>&quot; +&#xD;
+   &quot;#REMARK&quot;+&#xD;
+   &quot;&lt;TD >&lt;/TD> &lt;/TR>&quot;+&#xD;
+  &quot;&lt;/TABLE>&quot;+&#xD;
+  &quot;&lt;/TD>&lt;/TR>&quot;+ &#xD;
+  &quot;&lt;/TABLE> &quot;+&#xD;
+  &quot;&lt;/TD>&lt;/TR>&quot;+ &#xD;
+  &quot;&lt;/TABLE>&quot;;  &#xD;
+HTML = HTML.replace(new RegExp(&quot;#TITLE&quot;, &quot;gm&quot;), record.getValue(&quot;TITLE&quot;));&#xD;
+HTML = HTML.replace(&quot;#NAME&quot;, record.getValue(&quot;NAME&quot;));&#xD;
+HTML = HTML.replace(&quot;#ID&quot;, record.getValue(&quot;ID&quot;));&#xD;
+&#xD;
+if(null!=record.getValue(&quot;REMARK&quot;)&amp;&amp;&quot;&quot;!=record.getValue(&quot;REMARK&quot;))&#xD;
+{&#xD;
+	HTML = HTML.replace(&quot;#REMARK&quot;,&quot;&lt;TR>&lt;TD>&lt;/TD>&lt;TD colspan=2>&quot;+record.getValue(&quot;REMARK&quot;)+&quot;&lt;/TD>&lt;/tr>&quot;); &#xD;
+}&#xD;
+else{&#xD;
+	HTML = HTML.replace(&quot;#REMARK&quot;,&quot;&quot;);&#xD;
+}&#xD;
+&#xD;
+if(null!=record.getValue(&quot;SEARCH_RESULT_NAME&quot;)&amp;&amp;&quot;&quot;!=record.getValue(&quot;SEARCH_RESULT_NAME&quot;))&#xD;
+{&#xD;
+	HTML = HTML.replace(new RegExp(&quot;#TYPE&quot;, &quot;gm&quot;),record.getValue(&quot;SEARCH_RESULT_NAME&quot;)); &#xD;
+}&#xD;
+else{&#xD;
+	HTML = HTML.replace(&quot;#TYPE&quot;,&quot;&quot;);&#xD;
+}&#xD;
+var url = record.getValue(&quot;SEARCH_RESULT_URL&quot;).replace(new RegExp('&quot;', 'gm'), &quot;\\'&quot;);&#xD;
+HTML = HTML.replace(&quot;#URL&quot;,url);  &#xD;
+HTML = HTML.replace(&quot;#user_name&quot;, record.getValue(&quot;PUBLISHER_NAME&quot;)); &#xD;
+HTML = HTML.replace(&quot;#ASK_DATE&quot;, record.getString(&quot;RELEASE_TIME&quot;));&#xD;
+block.innerHTML = HTML;</Event>
+      </Events>
+    </Control>
+    <Control id="groupboxquery" showExpandButton="false" expanded="true" type="GroupBox"/>
+    <Control id="commandDetail" type="RequestCommand">
+      <Frame width="100%" target="_exclusive_subwindow" height="100%"/>
+      <Parameters/>
+      <Events/>
+    </Control>
+  </Controls>
+  <Properties/>
+  <Events>
+    <Event name="onLoad">if(null != datasetQuery.getValue(&quot;KEYWORD&quot;)){&#xD;
+	datasetSearch.parameters().setValue(&quot;keyword&quot;,datasetQuery.getValue(&quot;KEYWORD&quot;));&#xD;
+    datasetSearch.flushData();&#xD;
+}&#xD;
+</Event>
+    <Event name="functions">function showDetail(id, name, showname, url) {&#xD;
+	if (name == 'menuitems') {&#xD;
+		if (url.substring(0, 11) != &quot;javascript:&quot;) {&#xD;
+			parent.Main.Manager.createItem(id, showname, url);&#xD;
+	    } else {&#xD;
+	        eval(url.substring(11));&#xD;
+	    }&#xD;
+		&#xD;
+	} else {&#xD;
+		commandDetail.setPath(url);&#xD;
+		var subwindow = commandDetail.execute();&#xD;
+		subwindow.maximize();&#xD;
+	}&#xD;
+}&#xD;
+</Event>
+  </Events>
+</view>
